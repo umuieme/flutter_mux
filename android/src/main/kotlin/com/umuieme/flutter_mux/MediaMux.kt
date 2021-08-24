@@ -8,9 +8,12 @@ import java.io.File
 import java.io.IOException
 import java.nio.ByteBuffer
 
+
+import android.media.MediaMetadataRetriever;
 class MediaMux {
 
     fun muxAudioAndVideo(outputVideo: String, audioPath: String, videoPath: String): Boolean {
+        var isAudioFinish=false
         try {
             Log.e("MediaMux", "video output == $videoPath")
             val file = File(outputVideo)
@@ -21,6 +24,16 @@ class MediaMux {
             audioExtractor.setDataSource(audioPath)
             val muxer = MediaMuxer(outputVideo, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
             videoExtractor.selectTrack(0)
+//            val retrieverSrc = MediaMetadataRetriever()
+//            retrieverSrc.setDataSource(videoPath)
+//            val degreesString: String? =
+//                retrieverSrc.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION)
+//            if (degreesString != null) {
+//                val degrees: Int = Integer.parseInt(degreesString)
+//                if (degrees >= 0) {
+//                    muxer.setOrientationHint(degrees)
+//                }
+//            }
             val videoFormat = videoExtractor.getTrackFormat(0)
             val videoTrack = muxer.addTrack(videoFormat)
             audioExtractor.selectTrack(0)
@@ -40,18 +53,23 @@ class MediaMux {
             while (!sawEOS) {
                 videoBufferInfo.offset = offset
                 videoBufferInfo.size = videoExtractor.readSampleData(videoBuf, offset)
-
-                audioBufferInfo.offset = offset
-                audioBufferInfo.size = audioExtractor.readSampleData(audioBuf, offset)
-
+                if(!isAudioFinish) {
+                    audioBufferInfo.offset = offset
+                    audioBufferInfo.size = audioExtractor.readSampleData(audioBuf, offset)
+                }
                 Log.e("MediaMux", "audio == ${audioBufferInfo.size} == video ${videoBufferInfo.size}")
               //  if (videoBufferInfo.size < 0 || audioBufferInfo.size < 0) {
+
+                if(audioBufferInfo.size<0)
+                    {
+                      isAudioFinish=true;
+                    }
              if (videoBufferInfo.size < 0) {
                     sawEOS = true
                     videoBufferInfo.size = 0
                     audioBufferInfo.size = 0
                 } else {
-                    if(audioBufferInfo.size>0) {
+                    if(!isAudioFinish) {
                         audioBufferInfo.presentationTimeUs = audioExtractor.sampleTime
                         audioBufferInfo.flags = audioExtractor.sampleFlags
                         muxer.writeSampleData(audioTrack, audioBuf, audioBufferInfo)
