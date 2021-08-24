@@ -51,11 +51,12 @@ class MediaMux {
                     videoBufferInfo.size = 0
                     audioBufferInfo.size = 0
                 } else {
-                    audioBufferInfo.presentationTimeUs = audioExtractor.sampleTime
-                    audioBufferInfo.flags = audioExtractor.sampleFlags
-                    muxer.writeSampleData(audioTrack, audioBuf, audioBufferInfo)
-                    audioExtractor.advance()
-
+                    if(audioBufferInfo.size>0) {
+                        audioBufferInfo.presentationTimeUs = audioExtractor.sampleTime
+                        audioBufferInfo.flags = audioExtractor.sampleFlags
+                        muxer.writeSampleData(audioTrack, audioBuf, audioBufferInfo)
+                        audioExtractor.advance()
+                    }
                     videoBufferSize += videoBufferInfo.size
                     videoBufferInfo.presentationTimeUs = videoExtractor.sampleTime
                     videoBufferInfo.flags = videoExtractor.sampleFlags
