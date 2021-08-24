@@ -45,8 +45,8 @@ class MediaMux {
                 audioBufferInfo.size = audioExtractor.readSampleData(audioBuf, offset)
 
                 Log.e("MediaMux", "audio == ${audioBufferInfo.size} == video ${videoBufferInfo.size}")
-                if (videoBufferInfo.size < 0 || audioBufferInfo.size < 0) {
-//                if (videoBufferInfo.size < 0) {
+              //  if (videoBufferInfo.size < 0 || audioBufferInfo.size < 0) {
+             if (videoBufferInfo.size < 0) {
                     sawEOS = true
                     videoBufferInfo.size = 0
                     audioBufferInfo.size = 0
