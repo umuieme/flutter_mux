@@ -24,16 +24,16 @@ class MediaMux {
             audioExtractor.setDataSource(audioPath)
             val muxer = MediaMuxer(outputVideo, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
             videoExtractor.selectTrack(0)
-//            val retrieverSrc = MediaMetadataRetriever()
-//            retrieverSrc.setDataSource(videoPath)
-//            val degreesString: String? =
-//                retrieverSrc.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION)
-//            if (degreesString != null) {
-//                val degrees: Int = Integer.parseInt(degreesString)
-//                if (degrees >= 0) {
-//                    muxer.setOrientationHint(degrees)
-//                }
-//            }
+            val retrieverSrc = MediaMetadataRetriever()
+            retrieverSrc.setDataSource(videoPath)
+            val degreesString: String? =
+                retrieverSrc.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION)
+            if (degreesString != null) {
+                val degrees: Int = Integer.parseInt(degreesString)
+                if (degrees >= 0) {
+                    muxer.setOrientationHint(degrees)
+                }
+            }
             val videoFormat = videoExtractor.getTrackFormat(0)
             val videoTrack = muxer.addTrack(videoFormat)
             audioExtractor.selectTrack(0)
