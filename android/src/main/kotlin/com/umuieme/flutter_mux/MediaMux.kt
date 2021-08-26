@@ -26,6 +26,11 @@ class MediaMux {
             videoExtractor.selectTrack(0)
             val retrieverSrc = MediaMetadataRetriever()
             retrieverSrc.setDataSource(videoPath)
+
+            //for audio
+            val retrieverAudioSrc = MediaMetadataRetriever()
+            retrieverAudioSrc.setDataSource(videoPath)
+
             val degreesString: String? =
                 retrieverSrc.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION)
             if (degreesString != null) {
@@ -34,12 +39,23 @@ class MediaMux {
                     muxer.setOrientationHint(degrees)
                 }
             }
+            val time: String? =
+                retrieverSrc.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+            val videotimeduration: Long? = time!!.toLong()
+
+            //for Audio
+            val audiotime: String? =
+                retrieverAudioSrc.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)
+            val audiotimeduration: Long? = time!!.toLong()
+
+
             val videoFormat = videoExtractor.getTrackFormat(0)
             val videoTrack = muxer.addTrack(videoFormat)
             audioExtractor.selectTrack(0)
             val audioFormat = audioExtractor.getTrackFormat(0)
             val audioTrack = muxer.addTrack(audioFormat)
             var sawEOS = false
+            var sawEOA=false
             val offset = 0
             val sampleSize = 256*1024
             val videoBuf = ByteBuffer.allocate(sampleSize)
@@ -50,36 +66,44 @@ class MediaMux {
             audioExtractor.seekTo(0, MediaExtractor.SEEK_TO_CLOSEST_SYNC)
             muxer.start()
             var videoBufferSize = 0;
+
             while (!sawEOS) {
                 videoBufferInfo.offset = offset
                 videoBufferInfo.size = videoExtractor.readSampleData(videoBuf, offset)
-                if(!isAudioFinish) {
-                    audioBufferInfo.offset = offset
-                    audioBufferInfo.size = audioExtractor.readSampleData(audioBuf, offset)
-                }
-                Log.e("MediaMux", "audio == ${audioBufferInfo.size} == video ${videoBufferInfo.size}")
-              //  if (videoBufferInfo.size < 0 || audioBufferInfo.size < 0) {
-
-                if(audioBufferInfo.size<0)
-                    {
-                      isAudioFinish=true;
-                    }
-             if (videoBufferInfo.size < 0) {
+                if (videoBufferInfo.size < 0) {
                     sawEOS = true
                     videoBufferInfo.size = 0
-                    audioBufferInfo.size = 0
+
                 } else {
-                    if(!isAudioFinish) {
-                        audioBufferInfo.presentationTimeUs = audioExtractor.sampleTime
-                        audioBufferInfo.flags = audioExtractor.sampleFlags
-                        muxer.writeSampleData(audioTrack, audioBuf, audioBufferInfo)
-                        audioExtractor.advance()
-                    }
                     videoBufferSize += videoBufferInfo.size
                     videoBufferInfo.presentationTimeUs = videoExtractor.sampleTime
                     videoBufferInfo.flags = videoExtractor.sampleFlags
                     muxer.writeSampleData(videoTrack, videoBuf, videoBufferInfo)
                     videoExtractor.advance()
+                }
+            }
+
+
+            while (!sawEOA) {
+                    audioBufferInfo.offset = offset
+                    audioBufferInfo.size = audioExtractor.readSampleData(audioBuf, offset)
+             if (audioBufferInfo.size < 0) {
+                    sawEOA = true
+                    audioBufferInfo.size = 0
+                } else {
+
+
+                 if (audioBufferInfo.presentationTimeUs > videotimeduration!!) {
+                  //   audioExtractor.unselectTrack(audioTrackIndex);
+                     break;
+                 }
+
+                        audioBufferInfo.presentationTimeUs = audioExtractor.sampleTime
+                        audioBufferInfo.flags = audioExtractor.sampleFlags
+                        muxer.writeSampleData(audioTrack, audioBuf, audioBufferInfo)
+                        audioExtractor.advance()
+
+
 
 
                 }
